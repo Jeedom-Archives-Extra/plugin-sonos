@@ -1,5 +1,7 @@
 == Changelog
 
+- Ajout Sonos One et Playbase
+
 - Correction de la langue avec picotts
 
 - Ajout d'une commande "entrée de ligne"
