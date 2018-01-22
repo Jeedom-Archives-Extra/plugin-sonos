@@ -1,11 +1,3 @@
-<<<<<<< HEAD
----
-key_do_not_edit_lang: fr
-key_do_not_edit_label:
-    key_do_not_edit_titreMenu: Sommaire
-    key_do_not_edit_btnAffiche: Déplier
-    key_do_not_edit_btnMasquer: Cacher
----
 Le plugin Sonos permet de piloter les Sonos Play 1, 3, 5, Sonos Connect,
 Sonos Connect AMP et Sonos Playbar. Il va vous permettre de voir l’état
 du/des Sonos et d’effectuer des actions dessus (lecture, pause, suivant,
@@ -414,5 +406,4 @@ Sonos. Disponible à partir du menu Accueil → Sonos Controller :
 
 > **Important**
 >
->>>>>>> 26381c0eebab99b51de669c476d7670f1d9570f4
 > Pour avoir le panel il faut l’activer dans la configuration du plugin
