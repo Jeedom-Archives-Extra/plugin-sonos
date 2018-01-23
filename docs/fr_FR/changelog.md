@@ -19,6 +19,3 @@ Changelog détaillé :
 -   Ajout de picotts pour la génération du TTS en locale
 
 -   Correction du bouton play/pause lors de la mise à jour du widget
-
-
->>>>>>> 26381c0eebab99b51de669c476d7670f1d9570f4
