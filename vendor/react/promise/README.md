@@ -4,7 +4,7 @@ React/Promise
 A lightweight implementation of
 [CommonJS Promises/A](http://wiki.commonjs.org/wiki/Promises/A) for PHP.
 
-[![Build Status](https://travis-ci.org/reactphp/promise.svg?branch=master)](http://travis-ci.org/reactphp/promise)
+[![Build Status](https://secure.travis-ci.org/reactphp/promise.png?branch=master)](http://travis-ci.org/reactphp/promise)
 
 Table of Contents
 -----------------
@@ -775,26 +775,27 @@ function getJsonResult()
         );
 }
 
-// Here we provide no rejection handler. If the promise returned has been
-// rejected, the ApiErrorException will be thrown
+// Here we provide no rejection handler.
+// If the promise returned has been rejected,
+// a React\Promise\UnhandledRejectionException will be thrown
 getJsonResult()
     ->done(
         // Consume transformed object
         function ($jsonResultObject) {
-            // Do something with $jsonResultObject
+            // Do something with $jsonObject
         }
     );
 
 // Here we provide a rejection handler which will either throw while debugging
-// or log the exception
+// or log the exception.
 getJsonResult()
     ->done(
-        function ($jsonResultObject) {
-            // Do something with $jsonResultObject
+        function ($jsonObject) {
+            // Do something with $jsonObject
         },
         function (ApiErrorException $exception) {
             if (isDebug()) {
-                throw $exception;
+                throw $e;
             } else {
                 logException($exception);
             }

@@ -2,16 +2,14 @@
 
 namespace duncan3dc\SonosTests\Tracks;
 
-use duncan3dc\DomParser\XmlParser;
-use duncan3dc\DomParser\XmlWriter;
+use duncan3dc\DomParser\XmlElement;
 use duncan3dc\Sonos\Tracks\Deezer;
 use duncan3dc\Sonos\Tracks\Factory;
-use duncan3dc\Sonos\Tracks\Google;
-use duncan3dc\Sonos\Tracks\GoogleUnlimited;
 use duncan3dc\Sonos\Tracks\Spotify;
 use duncan3dc\Sonos\Tracks\Stream;
 use duncan3dc\Sonos\Tracks\Track;
 use duncan3dc\SonosTests\MockTest;
+use Mockery;
 
 class FactoryTest extends MockTest
 {
@@ -48,20 +46,6 @@ class FactoryTest extends MockTest
     }
 
 
-    public function testGoogleTrackUri()
-    {
-        $track = $this->factory->createFromUri("x-sonos-http:_dklxfo-EJN34xu9HkcfzBMGUd86HezVdklbzxKIUjyXkqC23MIzxiZu8-PtSkgc.mp3");
-        $this->assertInstanceOf(Google::class, $track);
-    }
-
-
-    public function testGoogleUnlimitedTrackUri()
-    {
-        $track = $this->factory->createFromUri("x-sonos-http:A0DvPDnowsEJN34xu9HkcfzBMGUd86HezVdklbzxKIUjyXkqC23MIzxiZu8-PtSkgc.mp3");
-        $this->assertInstanceOf(GoogleUnlimited::class, $track);
-    }
-
-
     public function testStreamTrackUri()
     {
         $track = $this->factory->createFromUri("x-sonosapi-stream:s200662?sid=254&flags=8224&sn=0");
@@ -69,23 +53,21 @@ class FactoryTest extends MockTest
     }
 
 
-    private function getXml($uri, $title = "")
+    protected function getMockXml($uri)
     {
-        $xml = XmlWriter::createXml([
-            "track" =>  [
-                "res"   =>  $uri,
-                "title" =>  $title,
-            ],
-        ]);
+        $xml = Mockery::mock(XmlElement::class);
+        $xml->shouldReceive("getTag")->once()->with("res")->andReturn($uri);
 
-        $parser = new XmlParser($xml);
-        return $parser->getTag("track");
+        $xml->shouldReceive("getTag")->with(Mockery::any());
+        $xml->shouldReceive("hasAttribute")->with(Mockery::any());
+
+        return $xml;
     }
 
 
     public function testNetworkTrackXml()
     {
-        $xml = $this->getXml("x-file-cifs://server/share/song.mp3");
+        $xml = $this->getMockXml("x-file-cifs://server/share/song.mp3");
         $track = $this->factory->createFromXml($xml);
         $this->assertInstanceOf(Track::class, $track);
     }
@@ -93,7 +75,7 @@ class FactoryTest extends MockTest
 
     public function testSpotifyTrackXml()
     {
-        $xml = $this->getXml("x-sonos-spotify:spotify:track:123sdfd6");
+        $xml = $this->getMockXml("x-sonos-spotify:spotify:track:123sdfd6");
         $track = $this->factory->createFromXml($xml);
         $this->assertInstanceOf(Spotify::class, $track);
     }
@@ -101,7 +83,7 @@ class FactoryTest extends MockTest
 
     public function testDeezerTrackXml()
     {
-        $xml = $this->getXml("x-sonos-http:tr:123sdfd6");
+        $xml = $this->getMockXml("x-sonos-http:tr:123sdfd6");
         $track = $this->factory->createFromXml($xml);
         $this->assertInstanceOf(Deezer::class, $track);
     }
@@ -109,7 +91,7 @@ class FactoryTest extends MockTest
 
     public function testStreamTrackXml()
     {
-        $xml = $this->getXml("x-sonosapi-stream:s200662?sid=254&flags=8224&sn=0");
+        $xml = $this->getMockXml("x-sonosapi-stream:s200662?sid=254&flags=8224&sn=0");
         $track = $this->factory->createFromXml($xml);
         $this->assertInstanceOf(Stream::class, $track);
     }

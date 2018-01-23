@@ -13,30 +13,11 @@ use Psr\Http\Message\RequestInterface;
 
 class PrepareBodyMiddlewareTest extends \PHPUnit_Framework_TestCase
 {
-
-    public function methodProvider()
-    {
-        $methods = ['GET', 'PUT', 'POST'];
-        $bodies = ['Test', ''];
-        foreach ($methods as $method) {
-            foreach ($bodies as $body) {
-                yield [$method, $body];
-            }
-        }
-    }
-    /**
-     * @dataProvider methodProvider
-     */
-    public function testAddsContentLengthWhenMissingAndPossible($method, $body)
+    public function testAddsContentLengthWhenMissingAndPossible()
     {
         $h = new MockHandler([
-            function (RequestInterface $request) use ($body) {
-                $length = strlen($body);
-                if ($length > 0) {
-                    $this->assertEquals($length, $request->getHeaderLine('Content-Length'));
-                } else {
-                    $this->assertFalse($request->hasHeader('Content-Length'));
-                }
+            function (RequestInterface $request) {
+                $this->assertEquals(3, $request->getHeaderLine('Content-Length'));
                 return new Response(200);
             }
         ]);
@@ -44,7 +25,7 @@ class PrepareBodyMiddlewareTest extends \PHPUnit_Framework_TestCase
         $stack = new HandlerStack($h);
         $stack->push($m);
         $comp = $stack->resolve();
-        $p = $comp(new Request($method, 'http://www.google.com', [], $body), []);
+        $p = $comp(new Request('PUT', 'http://www.google.com', [], '123'), []);
         $this->assertInstanceOf(PromiseInterface::class, $p);
         $response = $p->wait();
         $this->assertEquals(200, $response->getStatusCode());

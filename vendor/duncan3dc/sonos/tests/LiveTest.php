@@ -3,9 +3,8 @@
 namespace duncan3dc\SonosTests;
 
 use duncan3dc\Sonos\Network;
-use PHPUnit\Framework\TestCase;
 
-abstract class LiveTest extends TestCase
+abstract class LiveTest extends \PHPUnit_Framework_TestCase
 {
     protected $network;
 

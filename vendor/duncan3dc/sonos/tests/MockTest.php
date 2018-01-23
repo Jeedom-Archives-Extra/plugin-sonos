@@ -4,13 +4,12 @@ namespace duncan3dc\SonosTests;
 
 use duncan3dc\DomParser\XmlParser;
 use duncan3dc\Sonos\Controller;
-use duncan3dc\Sonos\Interfaces\Devices\DeviceInterface;
-use duncan3dc\Sonos\Interfaces\NetworkInterface;
+use duncan3dc\Sonos\Device;
+use duncan3dc\Sonos\Network;
 use duncan3dc\Sonos\Speaker;
 use Mockery;
-use PHPUnit\Framework\TestCase;
 
-abstract class MockTest extends TestCase
+abstract class MockTest extends \PHPUnit_Framework_TestCase
 {
     protected $network;
 
@@ -21,18 +20,18 @@ abstract class MockTest extends TestCase
 
     public function setUp()
     {
-        $this->network = Mockery::mock(NetworkInterface::class);
+        $this->network = Mockery::mock(Network::class);
 
         $this->network->shouldReceive("getSpeakers")->andReturn([]);
     }
 
     protected function getDevice()
     {
-        $device = Mockery::mock(DeviceInterface::class);
-        $device->shouldReceive("getIp")->andReturn("192.168.0.66");
+        $device = Mockery::mock("duncan3dc\Sonos\Device");
+        $device->ip = "192.168.0.66";
 
-        $parser = Mockery::mock(XmlParser::class);
-        $tag = Mockery::mock(XmlParser::class);
+        $parser = Mockery::mock("duncan3dc\DomParser\XmlParser");
+        $tag = Mockery::mock("duncan3dc\DomParser\XmlParser");
         $parser->shouldReceive("getTag")->with("device")->once()->andReturn($tag);
         $tag->shouldReceive("getTag")->with("friendlyName")->once()->andReturn("Test Name");
         $tag->shouldReceive("getTag")->with("roomName")->once()->andReturn("Test Room");
@@ -41,20 +40,20 @@ abstract class MockTest extends TestCase
         return $device;
     }
 
-    protected function getSpeaker(DeviceInterface $device)
+    protected function getSpeaker(Device $device)
     {
         $device->shouldReceive("isSpeaker")->once()->andReturn(true);
 
         return new Speaker($device);
     }
 
-    protected function getController(DeviceInterface $device)
+    protected function getController(Device $device)
     {
         $speaker = $this->getSpeaker($device);
 
-        $parser = Mockery::mock(XmlParser::class);
-        $players = Mockery::mock(XmlParser::class);
-        $player = Mockery::mock(XmlParser::class);
+        $parser = Mockery::mock("duncan3dc\DomParser\XmlParser");
+        $players = Mockery::mock("duncan3dc\DomParser\XmlParser");
+        $player = Mockery::mock("duncan3dc\DomParser\XmlParser");
         $parser->shouldReceive("getTag")->with("ZonePlayers")->once()->andReturn($players);
         $players->shouldReceive("getTags")->with("ZonePlayer")->once()->andReturn([$player]);
         $player->shouldReceive("getAttributes")->once()->andReturn([

@@ -2,7 +2,6 @@
 
 namespace duncan3dc\SonosTests;
 
-use duncan3dc\Sonos\Playlist;
 use duncan3dc\Sonos\Tracks\Track;
 
 class PlaylistLiveTest extends LiveTest
@@ -33,12 +32,6 @@ class PlaylistLiveTest extends LiveTest
     public function testGetName()
     {
         $this->assertSame($this->playlistName, $this->playlist->getName());
-    }
-    public function testGetNameFromNetwork()
-    {
-        $id = $this->playlist->getId();
-        $playlist = new Playlist($id, $this->network->getController());
-        $this->assertSame($this->playlistName, $playlist->getName());
     }
 
 

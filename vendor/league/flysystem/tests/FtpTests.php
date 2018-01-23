@@ -107,7 +107,7 @@ function ftp_chdir($connection, $directory)
         return false;
     }
 
-    if (in_array($directory, ['rawlist-total-0.txt', 'file1.txt', 'file2.txt', 'file3.txt', 'file4.txt', 'dir1', 'file1.with-total-line.txt', 'file1.with-invalid-line.txt'])) {
+    if (in_array($directory, ['file1.txt', 'file2.txt', 'file3.txt', 'file4.txt', 'dir1', 'file1.with-total-line.txt', 'file1.with-invalid-line.txt'])) {
         return false;
     }
 
@@ -125,10 +125,6 @@ function ftp_pwd($connection)
 
 function ftp_raw($connection, $command)
 {
-	if ($command === 'OPTS UTF8 ON') {
-        return [0 => '200 UTF8 set to on'];
-    }
-    
     if ($command === 'STAT syno.not.found') {
         return [0 => '211- status of syno.not.found:', 1 => 'ftpd: assd: No such file or directory.' ,2 => '211 End of status'];
     }
@@ -209,13 +205,13 @@ function ftp_rawlist($connection, $directory)
             '06-09-2016  12:09PM                  684 file3.txt',
         ];
     }
-
+    
     if (strpos($directory, 'file4.txt') !== false) {
         return [
             '2016-05-23  12:09PM                  684 file4.txt',
         ];
     }
-
+    
     if (strpos($directory, 'dir1') !== false) {
         return [
             '2015-05-23  12:09       <DIR>          dir1',
@@ -252,14 +248,8 @@ function ftp_rawlist($connection, $directory)
 
     if (strpos($directory, 'file1.with-total-line.txt') !== false) {
         return [
-            'total 1',
-            '-rw-r--r--   1 ftp      ftp           409 Aug 19 09:01 file1.txt',
-        ];
-    }
-
-    if (strpos($directory, 'rawlist-total-0.txt') !== false) {
-        return [
             'total 0',
+            '-rw-r--r--   1 ftp      ftp           409 Aug 19 09:01 file1.txt',
         ];
     }
 
@@ -504,15 +494,6 @@ class FtpTests extends \PHPUnit_Framework_TestCase
     /**
      * @depends testInstantiable
      */
-    public function testHasWithTotalZero()
-    {
-        $adapter = new Ftp($this->options);
-        $this->assertFalse($adapter->getMetadata('rawlist-total-0.txt'));
-    }
-
-    /**
-     * @depends testInstantiable
-     */
     public function testGetMetadataForRootFileNamedZero()
     {
         $adapter = new Ftp($this->options);
@@ -553,7 +534,7 @@ class FtpTests extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1473163740, $metadata['timestamp']);
         $this->assertEquals('public', $metadata['visibility']);
         $this->assertEquals(684, $metadata['size']);
-
+        
         $metadata = $adapter->getMetadata('file4.txt');
         $this->assertInternalType('array', $metadata);
         $this->assertEquals('file', $metadata['type']);
@@ -561,7 +542,7 @@ class FtpTests extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1464005340, $metadata['timestamp']);
         $this->assertEquals('public', $metadata['visibility']);
         $this->assertEquals(684, $metadata['size']);
-
+        
         $metadata = $adapter->getMetadata('dir1');
         $this->assertEquals('dir', $metadata['type']);
         $this->assertEquals('dir1', $metadata['path']);
@@ -608,12 +589,10 @@ class FtpTests extends \PHPUnit_Framework_TestCase
 
         $listing = $adapter->listContents('lastfiledir');
 
-        $last_modified_file = reset($listing);
+        $last_modified_file = null;
         foreach ($listing as $file) {
-            $file_time = $adapter->getTimestamp($file['path'])['timestamp'];
-            $last_file_time = $adapter->getTimestamp($last_modified_file['path'])['timestamp'];
-
-            if ($last_file_time < $file_time) {
+            if (empty($last_modified_file)
+                or $adapter->getTimestamp($last_modified_file['path']) < $adapter->getTimestamp($file['path'])) {
                 $last_modified_file = $file;
             }
         }
@@ -746,15 +725,6 @@ class FtpTests extends \PHPUnit_Framework_TestCase
         $adapter = new Ftp($this->options + ['systemType' => 'unix']);
         $metadata = $adapter->getMetadata('file1.with-invalid-line.txt');
         $this->assertEquals('file1.txt', $metadata['path']);
-    }
-
-    /**
-     * @depends testInstantiable
-     */
-    public function testReadFailure()
-    {
-        $adapter = new Ftp($this->options + ['systemType' => 'unix']);
-        $this->assertFalse($adapter->read('not.found'));
     }
 
     /**

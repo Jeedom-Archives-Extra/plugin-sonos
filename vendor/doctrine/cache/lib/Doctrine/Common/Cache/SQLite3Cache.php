@@ -86,11 +86,13 @@ class SQLite3Cache extends CacheProvider
      */
     protected function doFetch($id)
     {
-        if ($item = $this->findById($id)) {
-            return unserialize($item[self::DATA_FIELD]);
+        $item = $this->findById($id);
+
+        if (!$item) {
+            return false;
         }
 
-        return false;
+        return unserialize($item[self::DATA_FIELD]);
     }
 
     /**
@@ -98,7 +100,7 @@ class SQLite3Cache extends CacheProvider
      */
     protected function doContains($id)
     {
-        return (boolean) $this->findById($id, false);
+        return null !== $this->findById($id, false);
     }
 
     /**
@@ -157,7 +159,7 @@ class SQLite3Cache extends CacheProvider
      * Find a single row by ID.
      *
      * @param mixed $id
-     * @param boolean $includeData
+     * @param bool $includeData
      *
      * @return array|null
      */
@@ -201,14 +203,15 @@ class SQLite3Cache extends CacheProvider
      */
     private function getFields()
     {
-        return array(static::ID_FIELD, static::DATA_FIELD, static::EXPIRATION_FIELD);
+        return [static::ID_FIELD, static::DATA_FIELD, static::EXPIRATION_FIELD];
     }
 
     /**
      * Check if the item is expired.
      *
      * @param array $item
-     * @return boolean
+     *
+     * @return bool
      */
     private function isExpired(array $item)
     {

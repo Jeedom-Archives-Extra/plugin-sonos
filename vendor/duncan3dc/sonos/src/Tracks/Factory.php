@@ -3,8 +3,7 @@
 namespace duncan3dc\Sonos\Tracks;
 
 use duncan3dc\DomParser\XmlElement;
-use duncan3dc\Sonos\Interfaces\ControllerInterface;
-use duncan3dc\Sonos\Interfaces\TrackInterface;
+use duncan3dc\Sonos\Controller;
 
 /**
  * Factory for creating Track instances.
@@ -12,7 +11,7 @@ use duncan3dc\Sonos\Interfaces\TrackInterface;
 class Factory
 {
     /**
-     * @var ControllerInterface $controller A Controller instance to communicate with.
+     * @var Controller $controller A Controller instance to communicate with.
      */
     protected $controller;
 
@@ -20,9 +19,9 @@ class Factory
     /**
      * Create an instance of the Factory class.
      *
-     * @param ControllerInterface $controller A Controller instance to communicate with
+     * @param Controller $controller A Controller instance to communicate with
      */
-    public function __construct(ControllerInterface $controller)
+    public function __construct(Controller $controller)
     {
         $this->controller = $controller;
     }
@@ -35,7 +34,7 @@ class Factory
      *
      * @return string
      */
-    protected function guessTrackClass(string $uri): string
+    protected function guessTrackClass($uri)
     {
         $classes = [
             Spotify::class,
@@ -59,9 +58,9 @@ class Factory
      *
      * @param string $uri The URI of the track
      *
-     * @return TrackInterface
+     * @return Track
      */
-    public function createFromUri(string $uri): TrackInterface
+    public function createFromUri($uri)
     {
         $class = $this->guessTrackClass($uri);
 
@@ -74,9 +73,9 @@ class Factory
      *
      * @param XmlElement $xml The xml element representing the track meta data.
      *
-     * @return TrackInterface
+     * @return Track
      */
-    public function createFromXml(XmlElement $xml): TrackInterface
+    public function createFromXml(XmlElement $xml)
     {
         $uri = (string) $xml->getTag("res");
         $class = $this->guessTrackClass($uri);

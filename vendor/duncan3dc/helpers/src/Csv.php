@@ -203,18 +203,19 @@ class Csv
      */
     public static function getContents($filename)
     {
-        $file = fopen($filename, "r");
+        $contents = File::getContents($filename);
 
-        if ($file === false) {
-            throw new \RuntimeException("Cannot read the file: {$filename}");
-        }
+        # Remove any trailing blank lines
+        $contents = rtrim($contents);
 
-        $data = [];
-        while ($row = fgetcsv($file)) {
-            $data[] = $row;
-        }
+        # Break up the file by newlines
+        $data = explode("\n", $contents);
 
-        fclose($file);
+        # Trim each line
+        $data = array_map("trim", $data);
+
+        # Convert each line to an array
+        $data = array_map("str_getcsv", $data);
 
         return $data;
     }

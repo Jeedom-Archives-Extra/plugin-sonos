@@ -37,15 +37,20 @@
         "Playlist non trouvé : ": "Wiedergabeliste nicht gefunden:",
         "Erreur sur ": "Fehler auf ",
         "Options": "Optionen",
-        "Titre de la playlist": "Titre de la playlist",
-        "Titre de la radio": "Titre de la radio",
-        "Nom de la piece": "Nom de la piece",
+        "Titre de la playlist": "Titel der Wiedergabeliste",
+        "Titre de la radio": "Titel des Radios",
+        "Nom de la piece": "Name des Stückes",
         "Message": "Nachricht",
-        "Tache Z-Wave": "Tache Z-Wave",
+        "Tache Z-Wave": "Z-Wave Aufgaben",
         "OK": "OK",
-        "Tache de synchronisation": "Tache de synchronisation",
-        "Tâche de synchronisation": "Tâche de synchronisation",
-        "Transition": "Transition"
+        "Tache de synchronisation": "Synchronisierungsaufgabe",
+        "Tâche de synchronisation": "Synchronisierungsaufgabe",
+        "Transition": "Übergang",
+        "NOK": "NOK",
+        "Allez sur la page du moteur des tâches et vérifiez lancer la tache sonos3::pull": "Allez sur la page du moteur des tâches et vérifiez lancer la tache sonos3::pull",
+        "Muet status": "Stumm Status",
+        "Entrée de ligne": "Line-Eingang",
+        "Impossible de récuperer le sonos : ": "Impossible de récuperer le sonos :"
     },
     "plugins/sonos3/desktop/php/sonos3.php": {
         "Ajouter un template": "Vorlage hinzufügen",
@@ -69,7 +74,12 @@
         "Nom du sonos": "Sonos Name",
         "Mes Sonos": "Mein Sonos",
         "Model": "Model",
-        "Masquer la jaquette": "Das Cover ausblenden"
+        "Masquer la jaquette": "Das Cover ausblenden",
+        "Gestion": "Verwaltung",
+        "Configuration": "Konfiguration",
+        "Equipement": "Gerät",
+        "Commandes": "Befehle",
+        "Configuration avancée": "Erweiterte Konfiguration"
     },
     "plugins/sonos3/desktop/js/sonos3.js": {
         "Nom": "Name",
@@ -85,7 +95,22 @@
         "[TTS] Chemin Sonos du répertoire paratagé": "[TTS] Sonos-Pfad des freigegebenen Verzeichnises",
         "[TTS] Chemin Sonos du répertoire partagé": "[TTS] Sonos-Pfad des freigegebenen Verzeichnises",
         "Fournisseur TTS": "TTS Anbieter",
-        "Voix": "Voix"
+        "Voix": "Stimme",
+        "[TTS] IP du partage": "[TTS] IP  teilen",
+        "[TTS] Nom d'utilisateur pour le partage": "[TTS] Benutzername für den Austausch",
+        "[TTS] Mot de passe du partage": "[TTS] Passwort für den Austausch",
+        "[TTS] Chemin sur le nas": "[TTS] Pfad  auf der NAS",
+        "IP du partage": "IP  teilen",
+        "Nom d'utilisateur pour le partage": "Benutzername für den Austausch",
+        "Mot de passe du partage": "Passwort für den Austausch",
+        "Chemin sur le nas": "Pfad auf der NAS",
+        "Nom ou IP du partage": "Name oder IP für den Austausch",
+        "Attention votre version de PHP (5.6.14-0+deb8u1) est trop veille il faut au minimum PHP 5.6": "Attention votre version de PHP (5.6.14-0+deb8u1) est trop veille il faut au minimum PHP 5.6",
+        "Dépendance Sonos": "Sonos Abhängigkeit",
+        "Installer/Mettre à jour": "Installieren/Aktualisieren",
+        "Etes-vous sûr de vouloir installer/mettre à jour Sonos ? ": "Sind Sie sicher, dass Sie Sonos installieren/aktualisieren möchten?",
+        "Installation / Mise à jour": "Install/Update",
+        "Partage": "Teilen"
     },
     "plugins/sonos3/desktop/modal/queue.sonos.php": {
         "Artiste": "Interpret",
@@ -116,5 +141,12 @@
     "plugins/sonos3/desktop/php/panel.php": {
         "Liste objets": "Objekt Liste",
         "Rechercher": "Suchen nach"
+    },
+    "plugins/sonos3/desktop/modal/update.sonos.php": {
+        "Pause": "Pause",
+        "Rechercher": "Suchen nach"
+    },
+    "plugins/sonos3/plugin_info/info.json": {
+        "Plugin de controle de sonos": "Plugin zum steuern von SONOS Sound-Systeme"
     }
 }

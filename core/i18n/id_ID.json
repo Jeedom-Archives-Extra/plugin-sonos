@@ -8,7 +8,7 @@
         "Rafraîhir": "Menyegarkan",
         "Play": "Play",
         "Stop": "Stop",
-        "Pause": "Pause",
+        "Pause": "Berhenti Sebentar",
         "Suivant": "Suivant",
         "Precedent": "Precedent",
         "Muet": "Muet",
@@ -45,7 +45,12 @@
         "OK": "OK",
         "Tache de synchronisation": "Tache de synchronisation",
         "Tâche de synchronisation": "Tâche de synchronisation",
-        "Transition": "Transition"
+        "Transition": "Transition",
+        "NOK": "NOK",
+        "Allez sur la page du moteur des tâches et vérifiez lancer la tache sonos3::pull": "Allez sur la page du moteur des tâches et vérifiez lancer la tache sonos3::pull",
+        "Muet status": "Muet status",
+        "Entrée de ligne": "Entrée de ligne",
+        "Impossible de récuperer le sonos : ": "Impossible de récuperer le sonos :"
     },
     "plugins/sonos3/desktop/php/sonos3.php": {
         "Ajouter un template": "Ajouter un template",
@@ -69,7 +74,12 @@
         "Nom du sonos": "Nom du sonos",
         "Mes Sonos": "Mes Sonos",
         "Model": "Model",
-        "Masquer la jaquette": "Masquer la jaquette"
+        "Masquer la jaquette": "Masquer la jaquette",
+        "Gestion": "Manajemen",
+        "Configuration": "Konfigurasi",
+        "Equipement": "Peralatan",
+        "Commandes": "Perintah",
+        "Configuration avancée": "Configuration avancée"
     },
     "plugins/sonos3/desktop/js/sonos3.js": {
         "Nom": "Nama",
@@ -85,13 +95,28 @@
         "[TTS] Chemin Sonos du répertoire paratagé": "[TTS] Chemin Sonos du répertoire paratagé",
         "[TTS] Chemin Sonos du répertoire partagé": "[TTS] Chemin Sonos du répertoire partagé",
         "Fournisseur TTS": "Fournisseur TTS",
-        "Voix": "Voix"
+        "Voix": "Voix",
+        "[TTS] IP du partage": "[TTS] IP du partage",
+        "[TTS] Nom d'utilisateur pour le partage": "[TTS] Nom d'utilisateur pour le partage",
+        "[TTS] Mot de passe du partage": "[TTS] Mot de passe du partage",
+        "[TTS] Chemin sur le nas": "[TTS] Chemin sur le nas",
+        "IP du partage": "IP du partage",
+        "Nom d'utilisateur pour le partage": "Nom d'utilisateur pour le partage",
+        "Mot de passe du partage": "Mot de passe du partage",
+        "Chemin sur le nas": "Chemin sur le nas",
+        "Nom ou IP du partage": "Nom ou IP du partage",
+        "Attention votre version de PHP (5.6.14-0+deb8u1) est trop veille il faut au minimum PHP 5.6": "Attention votre version de PHP (5.6.14-0+deb8u1) est trop veille il faut au minimum PHP 5.6",
+        "Dépendance Sonos": "Dépendance Sonos",
+        "Installer/Mettre à jour": "Installer/Mettre à jour",
+        "Etes-vous sûr de vouloir installer/mettre à jour Sonos ? ": "Etes-vous sûr de vouloir installer/mettre à jour Sonos ?",
+        "Installation / Mise à jour": "Installation / Mise à jour",
+        "Partage": "Partage"
     },
     "plugins/sonos3/desktop/modal/queue.sonos.php": {
         "Artiste": "Artiste",
         "Album": "Album",
         "Piste": "Piste",
-        "Vider": "Vider",
+        "Vider": "Abisin",
         "Action": "Tindakan"
     },
     "plugins/sonos3/desktop/modal/playlist.sonos.php": {
@@ -102,7 +127,7 @@
         "Action": "Tindakan"
     },
     "plugins/sonos3/desktop/modal/radio.sonos.php": {
-        "Vider": "Vider",
+        "Vider": "Abisin",
         "Action": "Tindakan",
         "Radio": "Radio"
     },
@@ -116,5 +141,12 @@
     "plugins/sonos3/desktop/php/panel.php": {
         "Liste objets": "Liste objets",
         "Rechercher": "Mencari"
+    },
+    "plugins/sonos3/desktop/modal/update.sonos.php": {
+        "Pause": "Berhenti Sebentar",
+        "Rechercher": "Mencari"
+    },
+    "plugins/sonos3/plugin_info/info.json": {
+        "Plugin de controle de sonos": "Plugin de controle de sonos"
     }
 }

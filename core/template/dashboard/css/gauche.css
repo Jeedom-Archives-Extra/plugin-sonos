@@ -1,0 +1,77 @@
+.gauche_texte{
+	width:200px;
+	overflow: hidden;
+}
+.gauche_annee{
+	text-align: center;
+	padding: 5px;
+	background-color: #5d9cec;
+	height: 35px;
+}
+
+.gauche_genre{
+	text-align: center;
+	background-color: #468ce9;
+	width: 215px;
+	padding: 3px;
+	height: 45px;
+	overflow:auto;
+	right: -15px;
+}
+.video_sonos_only{
+	padding: 5px;
+	height: 195px;
+	overflow:auto;
+	width: 215px;
+	right: -15px;
+}
+.audio_sonos_only{
+	padding: 5px;
+	height: 195px;
+	overflow:auto;
+	width: 215px;
+	right: -15px;
+}
+.gauche_bas_sonos{
+	height: 50px;
+	background-color: #5d9cec;
+}
+.mix_sonos{
+	width: 30px;
+	height: 30px;
+	position: absolute;
+	bottom: 10px;
+	opacity: 0.6;
+	right: 18px;
+}
+.mix_sonos:hover{
+	opacity: 1;
+}
+.musicsync_sonos{
+	width: 30px;
+	height: 30px;
+	position: absolute;
+	bottom: 10px;
+	opacity: 0.6;
+	left: 85px;
+}
+.musicsync_sonos:hover{
+	opacity: 1;
+}
+.videosync_sonos{
+		width: 30px;
+	height: 30px;
+	position: absolute;
+	bottom: 10px;
+	opacity: 0.6;
+	left: 18px;
+}
+.videosync_sonos:hover{
+	opacity: 1;
+}
+.position_longueur_sonos{
+	position: absolute;
+	font-weight: bold;
+	right: 10px;
+	opacity: 0.6;
+}

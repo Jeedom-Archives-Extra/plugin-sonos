@@ -17,7 +17,7 @@ class Google extends Track
      *
      * @param string $uri The URI of the track or the Google ID of the track
      */
-    public function __construct(string $uri)
+    public function __construct($uri)
     {
         # If this is a Google track ID and not a URI then convert it to a URI now
         if (substr($uri, 0, strlen(static::PREFIX)) !== static::PREFIX) {
@@ -33,7 +33,7 @@ class Google extends Track
      *
      * @return string
      */
-    public function getMetaData(): string
+    public function getMetaData()
     {
         $uri = substr($this->uri, strlen(static::PREFIX));
         if ($pos = strpos($uri, ".mp3")) {

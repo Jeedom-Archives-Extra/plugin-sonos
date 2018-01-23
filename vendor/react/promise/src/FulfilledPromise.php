@@ -17,12 +17,14 @@ class FulfilledPromise implements ExtendedPromiseInterface, CancellablePromiseIn
 
     public function then(callable $onFulfilled = null, callable $onRejected = null, callable $onProgress = null)
     {
-        if (null === $onFulfilled) {
-            return $this;
-        }
-
         try {
-            return resolve($onFulfilled($this->value));
+            $value = $this->value;
+
+            if (null !== $onFulfilled) {
+                $value = $onFulfilled($value);
+            }
+
+            return resolve($value);
         } catch (\Exception $exception) {
             return new RejectedPromise($exception);
         }
@@ -43,7 +45,7 @@ class FulfilledPromise implements ExtendedPromiseInterface, CancellablePromiseIn
 
     public function otherwise(callable $onRejected)
     {
-        return $this;
+        return new FulfilledPromise($this->value);
     }
 
     public function always(callable $onFulfilledOrRejected)
@@ -57,7 +59,7 @@ class FulfilledPromise implements ExtendedPromiseInterface, CancellablePromiseIn
 
     public function progress(callable $onProgress)
     {
-        return $this;
+        return new FulfilledPromise($this->value);
     }
 
     public function cancel()

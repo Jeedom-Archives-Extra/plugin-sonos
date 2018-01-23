@@ -7,7 +7,7 @@ class LazyOpenStreamTest extends \PHPUnit_Framework_TestCase
 {
     private $fname;
 
-    protected function setUp()
+    public function setup()
     {
         $this->fname = tempnam('/tmp', 'tfile');
 
@@ -16,7 +16,7 @@ class LazyOpenStreamTest extends \PHPUnit_Framework_TestCase
         }
     }
 
-    protected function tearDown()
+    public function tearDown()
     {
         if (file_exists($this->fname)) {
             unlink($this->fname);

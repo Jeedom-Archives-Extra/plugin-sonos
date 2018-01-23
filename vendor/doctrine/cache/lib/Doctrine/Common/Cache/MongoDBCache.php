@@ -21,6 +21,7 @@ namespace Doctrine\Common\Cache;
 
 use MongoBinData;
 use MongoCollection;
+use MongoCursorException;
 use MongoDate;
 
 /**
@@ -41,7 +42,7 @@ class MongoDBCache extends CacheProvider
      * cache entry should expire.
      *
      * With MongoDB 2.2+, entries can be automatically deleted by MongoDB by
-     * indexing this field wit the "expireAfterSeconds" option equal to zero.
+     * indexing this field with the "expireAfterSeconds" option equal to zero.
      * This will direct MongoDB to regularly query for and delete any entries
      * whose date is older than the current time. Entries without a date value
      * in this field will be ignored.
@@ -81,7 +82,7 @@ class MongoDBCache extends CacheProvider
      */
     protected function doFetch($id)
     {
-        $document = $this->collection->findOne(array('_id' => $id), array(self::DATA_FIELD, self::EXPIRATION_FIELD));
+        $document = $this->collection->findOne(['_id' => $id], [self::DATA_FIELD, self::EXPIRATION_FIELD]);
 
         if ($document === null) {
             return false;
@@ -100,7 +101,7 @@ class MongoDBCache extends CacheProvider
      */
     protected function doContains($id)
     {
-        $document = $this->collection->findOne(array('_id' => $id), array(self::EXPIRATION_FIELD));
+        $document = $this->collection->findOne(['_id' => $id], [self::EXPIRATION_FIELD]);
 
         if ($document === null) {
             return false;
@@ -119,14 +120,18 @@ class MongoDBCache extends CacheProvider
      */
     protected function doSave($id, $data, $lifeTime = 0)
     {
-        $result = $this->collection->update(
-            array('_id' => $id),
-            array('$set' => array(
-                self::EXPIRATION_FIELD => ($lifeTime > 0 ? new MongoDate(time() + $lifeTime) : null),
-                self::DATA_FIELD => new MongoBinData(serialize($data), MongoBinData::BYTE_ARRAY),
-            )),
-            array('upsert' => true, 'multiple' => false)
-        );
+        try {
+            $result = $this->collection->update(
+                ['_id' => $id],
+                ['$set' => [
+                    self::EXPIRATION_FIELD => ($lifeTime > 0 ? new MongoDate(time() + $lifeTime) : null),
+                    self::DATA_FIELD => new MongoBinData(serialize($data), MongoBinData::BYTE_ARRAY),
+                ]],
+                ['upsert' => true, 'multiple' => false]
+            );
+        } catch (MongoCursorException $e) {
+            return false;
+        }
 
         return isset($result['ok']) ? $result['ok'] == 1 : true;
     }
@@ -136,9 +141,9 @@ class MongoDBCache extends CacheProvider
      */
     protected function doDelete($id)
     {
-        $result = $this->collection->remove(array('_id' => $id));
+        $result = $this->collection->remove(['_id' => $id]);
 
-        return isset($result['n']) ? $result['n'] == 1 : true;
+        return isset($result['ok']) ? $result['ok'] == 1 : true;
     }
 
     /**
@@ -157,30 +162,31 @@ class MongoDBCache extends CacheProvider
      */
     protected function doGetStats()
     {
-        $serverStatus = $this->collection->db->command(array(
+        $serverStatus = $this->collection->db->command([
             'serverStatus' => 1,
             'locks' => 0,
             'metrics' => 0,
             'recordStats' => 0,
             'repl' => 0,
-        ));
+        ]);
 
-        $collStats = $this->collection->db->command(array('collStats' => 1));
+        $collStats = $this->collection->db->command(['collStats' => 1]);
 
-        return array(
+        return [
             Cache::STATS_HITS => null,
             Cache::STATS_MISSES => null,
-            Cache::STATS_UPTIME => (isset($serverStatus['uptime']) ? (integer) $serverStatus['uptime'] : null),
-            Cache::STATS_MEMORY_USAGE => (isset($collStats['size']) ? (integer) $collStats['size'] : null),
+            Cache::STATS_UPTIME => (isset($serverStatus['uptime']) ? (int) $serverStatus['uptime'] : null),
+            Cache::STATS_MEMORY_USAGE => (isset($collStats['size']) ? (int) $collStats['size'] : null),
             Cache::STATS_MEMORY_AVAILABLE  => null,
-        );
+        ];
     }
 
     /**
      * Check if the document is expired.
      *
      * @param array $document
-     * @return boolean
+     *
+     * @return bool
      */
     private function isExpired(array $document)
     {

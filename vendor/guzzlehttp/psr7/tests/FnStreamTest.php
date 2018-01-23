@@ -46,7 +46,6 @@ class FnStreamTest extends \PHPUnit_Framework_TestCase
     {
         $s = new FnStream([]);
         unset($s);
-        $this->assertTrue(true); // strict mode requires an assertion
     }
 
     public function testDecoratesStream()

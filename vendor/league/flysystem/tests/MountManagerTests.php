@@ -1,5 +1,6 @@
 <?php
 
+use League\Flysystem\Filesystem;
 use League\Flysystem\MountManager;
 
 class MountManagerTests extends PHPUnit_Framework_TestCase

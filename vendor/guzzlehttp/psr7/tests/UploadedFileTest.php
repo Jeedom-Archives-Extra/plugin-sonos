@@ -10,14 +10,14 @@ use GuzzleHttp\Psr7\UploadedFile;
  */
 class UploadedFileTest extends \PHPUnit_Framework_TestCase
 {
-    private $cleanup;
+    protected $cleanup;
 
-    protected function setUp()
+    public function setUp()
     {
         $this->cleanup = [];
     }
 
-    protected function tearDown()
+    public function tearDown()
     {
         foreach ($this->cleanup as $file) {
             if (is_scalar($file) && file_exists($file)) {
@@ -252,7 +252,7 @@ class UploadedFileTest extends \PHPUnit_Framework_TestCase
     {
         $uploadedFile = new UploadedFile('not ok', 0, $status);
         $this->setExpectedException('RuntimeException', 'upload error');
-        $uploadedFile->moveTo(__DIR__ . '/' . sha1(uniqid('', true)));
+        $uploadedFile->moveTo(__DIR__ . '/' . uniqid());
     }
 
     /**
@@ -262,7 +262,7 @@ class UploadedFileTest extends \PHPUnit_Framework_TestCase
     {
         $uploadedFile = new UploadedFile('not ok', 0, $status);
         $this->setExpectedException('RuntimeException', 'upload error');
-        $uploadedFile->getStream();
+        $stream = $uploadedFile->getStream();
     }
 
     public function testMoveToCreatesStreamIfOnlyAFilenameWasProvided()

@@ -3,12 +3,10 @@
 namespace duncan3dc\SonosTests\Tracks;
 
 use duncan3dc\DomParser\XmlParser;
-use duncan3dc\Sonos\Controller;
 use duncan3dc\Sonos\Tracks\Track;
 use Mockery;
-use PHPUnit\Framework\TestCase;
 
-class TrackTest extends TestCase
+class TrackTest extends \PHPUnit_Framework_TestCase
 {
     protected $xml1 = <<<XML
             <track>
@@ -35,8 +33,8 @@ XML;
 
     public function setUp()
     {
-        $controller = Mockery::mock(Controller::class);
-        $controller->shouldReceive("getIp")->with()->andReturn("192.168.0.66");
+        $controller = Mockery::mock("duncan3dc\Sonos\Controller");
+        $controller->ip = "192.168.0.66";
 
         $xml = new XmlParser($this->xml1);
         $this->track1 = Track::createFromXml($xml->getTag("track"), $controller);
@@ -55,56 +53,56 @@ XML;
     public function testGetTrackMetaDataTitle()
     {
         $value = "TITLE";
-        $this->assertSame($value, $this->track1->getTitle());
+        $this->assertSame($value, $this->track1->title);
     }
 
 
     public function testGetTrackMetaDataArtist()
     {
         $value = "ARTIST";
-        $this->assertSame($value, $this->track1->getArtist());
+        $this->assertSame($value, $this->track1->artist);
     }
 
 
     public function testGetTrackMetaDataAlbum()
     {
         $value = "ALBUM";
-        $this->assertSame($value, $this->track1->getAlbum());
+        $this->assertSame($value, $this->track1->album);
     }
 
 
     public function testGetTrackMetaDataNumber()
     {
         $value = 3;
-        $this->assertSame($value, $this->track1->getNumber());
+        $this->assertSame($value, $this->track1->number);
     }
 
 
     public function testGetTrackMetaDataStreamTitle()
     {
         $value = "Of Matter - Proxy";
-        $this->assertSame($value, $this->track2->getTitle());
+        $this->assertSame($value, $this->track2->title);
     }
 
 
     public function testGetTrackMetaDataStreamArtist()
     {
         $value = "Tesseract";
-        $this->assertSame($value, $this->track2->getArtist());
+        $this->assertSame($value, $this->track2->artist);
     }
 
 
     public function testGetTrackMetaDataStreamAlbum()
     {
         $value = "";
-        $this->assertSame($value, $this->track2->getAlbum());
+        $this->assertSame($value, $this->track2->album);
     }
 
 
     public function testGetTrackMetaDataStreamNumber()
     {
         $value = 0;
-        $this->assertSame($value, $this->track2->getNumber());
+        $this->assertSame($value, $this->track2->number);
     }
 
 

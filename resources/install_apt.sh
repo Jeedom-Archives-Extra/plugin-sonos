@@ -9,10 +9,7 @@ sudo apt-get clean
 echo 30 > ${PROGRESS_FILE}
 sudo apt-get update
 echo 50 > ${PROGRESS_FILE}
-sudo apt-get install -y smbclient php-mbstring php-soap
-echo 75 > ${PROGRESS_FILE}
-sudo apt-get install libttspico-utils
+sudo apt-get install -y smbclient
 echo 100 > ${PROGRESS_FILE}
-sudo systemctl reload apache2
 echo "Everything is successfully installed!"
 rm ${PROGRESS_FILE}

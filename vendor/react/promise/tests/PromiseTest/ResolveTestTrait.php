@@ -98,11 +98,6 @@ trait ResolveTestTrait
             ->with($this->identicalTo(1));
 
         $adapter->promise()
-            ->then(function ($value) use ($adapter) {
-                $adapter->resolve(3);
-
-                return $value;
-            })
             ->then(
                 $mock,
                 $this->expectCallableNever()

@@ -4,12 +4,10 @@
 	"description" : "Plugin de controle de sonos",
 	"licence" : "AGPL",
 	"author" : "Loïc",
-	"require" : "3.0",
+	"require" : "2.4",
 	"category" : "multimedia",
 	"hasDependency" : true,
 	"hasOwnDeamon" : true,
 	"display" : "panel",
-	"mobile" : "panel",
-	"changelog" : "https://jeedom.github.io/plugin-sonos/#language#/changelog",
-	"documentation" : "https://jeedom.github.io/plugin-sonos/#language#/"
+	"mobile" : "panel"
 }

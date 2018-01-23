@@ -19,15 +19,6 @@ class EachPromiseTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($each->promise(), $each->promise());
     }
 
-    public function testResolvesInCaseOfAnEmptyList()
-    {
-        $promises = [];
-        $each = new EachPromise($promises);
-        $p = $each->promise();
-        P\queue()->run();
-        $this->assertEquals(PromiseInterface::FULFILLED, $p->getState());
-    }
-
     public function testInvokesAllPromises()
     {
         $promises = [new Promise(), new Promise(), new Promise()];

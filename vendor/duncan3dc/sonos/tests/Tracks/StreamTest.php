@@ -3,9 +3,8 @@
 namespace duncan3dc\SonosTests\Tracks;
 
 use duncan3dc\Sonos\Tracks\Stream;
-use PHPUnit\Framework\TestCase;
 
-class StreamTest extends TestCase
+class StreamTest extends \PHPUnit_Framework_TestCase
 {
 
     public function testGetUri()
@@ -15,15 +14,15 @@ class StreamTest extends TestCase
     }
 
 
-    public function testGetTitle1()
+    public function testGetName1()
     {
         $stream = new Stream("uri-test");
-        $this->assertSame("", $stream->getTitle());
+        $this->assertSame("", $stream->getName());
     }
-    public function testGetTitle2()
+    public function testGetName2()
     {
         $stream = new Stream("uri-test", "super stream");
-        $this->assertSame("super stream", $stream->getTitle());
+        $this->assertSame("super stream", $stream->getName());
     }
 
 

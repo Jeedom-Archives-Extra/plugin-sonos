@@ -3,7 +3,6 @@
 namespace duncan3dc\SonosTests\Services;
 
 use duncan3dc\Sonos\Controller;
-use duncan3dc\Sonos\Exceptions\NotFoundException;
 use duncan3dc\Sonos\Services\Radio;
 use duncan3dc\Sonos\Tracks\Stream;
 use duncan3dc\SonosTests\MockTest;
@@ -92,9 +91,9 @@ class QueueTest extends MockTest
             "Result"    =>  "<item><title>Station 1</title><res>URI</res></item>",
         ]);
 
-        $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage("Unable to find a radio station by the name 'Station 2'");
-        $this->radio->getFavouriteStation("Station 2");
+        $result = $this->radio->getFavouriteStation("Station 2");
+
+        $this->assertNull($result);
     }
 
 
@@ -169,8 +168,8 @@ class QueueTest extends MockTest
             "Result"    =>  "<container><title>Show 1</title><res>URI</res></container>",
         ]);
 
-        $this->expectException(NotFoundException::class);
-        $this->expectExceptionMessage("Unable to find a radio show by the name 'Show 2'");
-        $this->radio->getFavouriteShow("Show 2");
+        $result = $this->radio->getFavouriteShow("Show 2");
+
+        $this->assertNull($result);
     }
 }

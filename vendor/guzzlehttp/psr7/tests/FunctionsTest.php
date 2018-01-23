@@ -4,7 +4,6 @@ namespace GuzzleHttp\Tests\Psr7;
 use GuzzleHttp\Psr7;
 use GuzzleHttp\Psr7\FnStream;
 use GuzzleHttp\Psr7\NoSeekStream;
-use Psr\Http\Message\ServerRequestInterface;
 
 class FunctionsTest extends \PHPUnit_Framework_TestCase
 {
@@ -60,27 +59,6 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('', (string) $s2);
     }
 
-    public function testCopyToStreamReadsInChunksInsteadOfAllInMemory()
-    {
-        $sizes = [];
-        $s1 = new Psr7\FnStream([
-            'eof' => function() {
-                return false;
-            },
-            'read' => function($size) use (&$sizes) {
-                $sizes[] = $size;
-                return str_repeat('.', $size);
-            }
-        ]);
-        $s2 = Psr7\stream_for('');
-        Psr7\copy_to_stream($s1, $s2, 16394);
-        $s2->seek(0);
-        $this->assertEquals(16394, strlen($s2->getContents()));
-        $this->assertEquals(8192, $sizes[0]);
-        $this->assertEquals(8192, $sizes[1]);
-        $this->assertEquals(10, $sizes[2]);
-    }
-
     public function testStopsCopyToSteamWhenReadFailsWithMaxLen()
     {
         $s1 = Psr7\stream_for('foobaz');
@@ -95,24 +73,14 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $s = Psr7\stream_for("foo\nbaz\nbar");
         $this->assertEquals("foo\n", Psr7\readline($s));
         $this->assertEquals("baz\n", Psr7\readline($s));
-        $this->assertEquals('bar', Psr7\readline($s));
+        $this->assertEquals("bar", Psr7\readline($s));
     }
 
     public function testReadsLinesUpToMaxLength()
     {
         $s = Psr7\stream_for("12345\n");
-        $this->assertEquals('123', Psr7\readline($s, 4));
+        $this->assertEquals("123", Psr7\readline($s, 4));
         $this->assertEquals("45\n", Psr7\readline($s));
-    }
-
-    public function testReadLinesEof()
-    {
-        // Should return empty string on EOF
-        $s = Psr7\stream_for("foo\nbar");
-        while (!$s->eof()) {
-            Psr7\readline($s);
-        }
-        $this->assertSame('', Psr7\readline($s));
     }
 
     public function testReadsLineUntilFalseReturnedFromRead()
@@ -134,7 +102,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $s->expects($this->exactly(2))
             ->method('eof')
             ->will($this->returnValue(false));
-        $this->assertEquals('h', Psr7\readline($s));
+        $this->assertEquals("h", Psr7\readline($s));
     }
 
     public function testCalculatesHash()
@@ -235,7 +203,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider parseQueryProvider
      */
-    public function testParsesAndBuildsQueries($input)
+    public function testParsesAndBuildsQueries($input, $output)
     {
         $result = Psr7\parse_query($input, false);
         $this->assertSame($input, Psr7\build_query($result, false));
@@ -333,24 +301,12 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
     {
         $res = "HTTP/1.0 200 OK\r\nFoo: Bar\r\nBaz: Bam\r\nBaz: Qux\r\n\r\nTest";
         $response = Psr7\parse_response($res);
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame('OK', $response->getReasonPhrase());
-        $this->assertSame('1.0', $response->getProtocolVersion());
-        $this->assertSame('Bar', $response->getHeaderLine('Foo'));
-        $this->assertSame('Bam, Qux', $response->getHeaderLine('Baz'));
-        $this->assertSame('Test', (string) $response->getBody());
-    }
-
-    public function testParsesResponseWithoutReason()
-    {
-        $res = "HTTP/1.0 200\r\nFoo: Bar\r\nBaz: Bam\r\nBaz: Qux\r\n\r\nTest";
-        $response = Psr7\parse_response($res);
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame('OK', $response->getReasonPhrase());
-        $this->assertSame('1.0', $response->getProtocolVersion());
-        $this->assertSame('Bar', $response->getHeaderLine('Foo'));
-        $this->assertSame('Bam, Qux', $response->getHeaderLine('Baz'));
-        $this->assertSame('Test', (string) $response->getBody());
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('OK', $response->getReasonPhrase());
+        $this->assertEquals('1.0', $response->getProtocolVersion());
+        $this->assertEquals('Bar', $response->getHeaderLine('Foo'));
+        $this->assertEquals('Bam, Qux', $response->getHeaderLine('Baz'));
+        $this->assertEquals('Test', (string) $response->getBody());
     }
 
     /**
@@ -568,7 +524,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
         $res = new Psr7\Response(200, [], $body);
         Psr7\rewind_body($res);
         $this->assertEquals(0, $body->tell());
-        $body->rewind();
+        $body->rewind(1);
         Psr7\rewind_body($res);
         $this->assertEquals(0, $body->tell());
     }
@@ -623,7 +579,7 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
 
         $r1 = new Psr7\ServerRequest('GET', 'http://foo.com');
         $r2 = Psr7\modify_request($r1, []);
-        $this->assertTrue($r2 instanceof ServerRequestInterface);
+        $this->assertTrue($r2 instanceof \Psr\Http\Message\ServerRequestInterface);
     }
 
     public function testReturnsUriAsIsWhenNoChanges()
@@ -658,13 +614,6 @@ class FunctionsTest extends \PHPUnit_Framework_TestCase
 
         $r1 = new Psr7\ServerRequest('GET', 'http://foo.com');
         $r2 = Psr7\modify_request($r1, ['remove_headers' => ['non-existent']]);
-        $this->assertTrue($r2 instanceof ServerRequestInterface);
-    }
-}
-
-class HasToString
-{
-    public function __toString() {
-        return 'foo';
+        $this->assertTrue($r2 instanceof \Psr\Http\Message\ServerRequestInterface);
     }
 }
