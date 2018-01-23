@@ -3,7 +3,7 @@
 namespace duncan3dc\Speaker\Providers;
 
 /**
- * Convert a string of a text to spoken word audio.
+ * Convert a string of a text to a spoken word mp3.
  */
 class GoogleProvider extends AbstractProvider
 {
@@ -59,11 +59,11 @@ class GoogleProvider extends AbstractProvider
 
 
     /**
-     * Convert the specified text to audio.
+     * Convert the specified text to mp3 audio.
      *
      * @param string $text The text to convert
      *
-     * @return string The audio data
+     * @return string The mp3 audio data
      */
     public function textToSpeech($text)
     {
@@ -72,9 +72,8 @@ class GoogleProvider extends AbstractProvider
         }
 
         return $this->sendRequest("http://translate.google.com/translate_tts", [
-            "q"         =>  $text,
-            "tl"        =>  $this->language,
-            "client"    =>  "duncan3dc-speaker",
+            "q"     =>  $text,
+            "tl"    =>  $this->language,
         ]);
     }
 }

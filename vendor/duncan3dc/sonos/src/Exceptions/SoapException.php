@@ -5,7 +5,7 @@ namespace duncan3dc\Sonos\Exceptions;
 /**
  * Provides extra information about upnp exceptions
  */
-class SoapException extends SonosException
+class SoapException extends \Exception
 {
     /**
      * @param \SoapClient $client The SoapClient instance that threw the SoapFault
@@ -35,7 +35,7 @@ class SoapException extends SonosException
      *
      * @return string
      */
-    public function getRequest(): string
+    public function getRequest()
     {
         return $this->client->__getLastRequest();
     }
@@ -46,7 +46,7 @@ class SoapException extends SonosException
      *
      * @return string
      */
-    public function getResponse(): string
+    public function getResponse()
     {
         return $this->client->__getLastResponse();
     }

@@ -17,48 +17,28 @@
 
 require_once dirname(__FILE__) . '/../../../core/php/core.inc.php';
 include_file('core', 'authentification', 'php');
-if (!isConnect('admin')) {
-	throw new Exception('{{401 - Accès non autorisé}}');
+if (!isConnect()) {
+	include_file('desktop', '404', 'php');
+	die();
 }
 ?>
 <form class="form-horizontal">
 	<fieldset>
-    <?php
-if (version_compare(PHP_VERSION, '7.0') < 0) {
-	echo '<div class="alert alert-danger">{{Attention votre version de PHP (' . PHP_VERSION . ') est trop veille il faut au minimum PHP 7.0}}</div>';
-}
-?>
-   <div class="form-group">
-     <label class="col-lg-3 control-label">{{Le plugin sonos doit réagir aux interactions :}}</label>
-     <div class="col-lg-4">
-      <textarea class="configKey form-control" data-l1key="interact::sentence"></textarea>
+   <div class="form-group useShare">
+    <label class="col-lg-4 control-label">{{[TTS] Chemin local du répertoire partagé}}</label>
+    <div class="col-lg-2">
+      <input class="configKey tooltips form-control" data-l1key="localpath" placeholder="/local/path" />
     </div>
   </div>
   <div class="form-group useShare">
-    <label class="col-lg-3 control-label">{{Partage}}</label>
+    <label class="col-lg-4 control-label">{{[TTS] Chemin Sonos du répertoire partagé}}</label>
     <div class="col-lg-2">
-     <div class="input-group">
-       <input class="configKey form-control" data-l1key="tts_host" />
-       <div class="input-group-addon">/</div>
-       <input class="configKey form-control" data-l1key="tts_path" />
-     </div>
-   </div>
- </div>
- <div class="form-group useShare">
-  <label class="col-lg-3 control-label">{{Nom d'utilisateur pour le partage}}</label>
-  <div class="col-lg-2">
-    <input class="configKey form-control" data-l1key="tts_username" />
+      <input class="configKey tooltips form-control" data-l1key="pathToSmb" placeholder="hostname/path/to/smb" />
+    </div>
   </div>
-</div>
-<div class="form-group useShare">
-  <label class="col-lg-3 control-label">{{Mot de passe du partage}}</label>
-  <div class="col-lg-2">
-    <input type="password" class="configKey form-control" data-l1key="tts_password" />
-  </div>
-</div>
 </div>
 <div class="form-group">
- <label class="col-lg-3 control-label">{{Découverte}}</label>
+ <label class="col-lg-4 control-label">{{Découverte}}</label>
  <div class="col-lg-2">
   <a class="btn btn-default" id="bt_syncSonos"><i class='fa fa-refresh'></i> {{Rechercher les équipements Sonos}}</a>
 </div>
@@ -67,13 +47,6 @@ if (version_compare(PHP_VERSION, '7.0') < 0) {
 </form>
 
 <script>
-  $('.configKey[data-l1key=ttsProvider').on('change',function(){
-    $('.configKey[data-l1key=ttsVoxygenVoice').closest('.form-group').hide();
-    if($(this).value() == 'voxygen'){
-      $('.configKey[data-l1key=ttsVoxygenVoice').closest('.form-group').show();
-    }
-  });
-
   $('#bt_syncSonos').on('click', function () {
         $.ajax({// fonction permettant de faire de l'ajax
             type: "POST", // methode de transmission des données au fichier php

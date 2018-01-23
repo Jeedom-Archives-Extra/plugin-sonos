@@ -2,6 +2,8 @@
 
 namespace duncan3dc\DomParser;
 
+use duncan3dc\Helpers\Helper;
+
 /**
  * Shared methods for the parsers.
  */
@@ -24,7 +26,7 @@ trait Parser
     protected function getData($param)
     {
         if (substr($param, 0, 4) == "http") {
-            $data = $this->getDataFromUrl($param);
+            $data = Helper::curl($param);
         } else {
             $data = $param;
         }
@@ -37,39 +39,5 @@ trait Parser
         libxml_clear_errors();
 
         return $data;
-    }
-
-
-    /**
-     * Download the content from a URL.
-     *
-     * @param string The URL to download
-     *
-     * @return string The xml/html downloaded from the url
-     */
-    protected function getDataFromUrl($url)
-    {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, [
-            CURLOPT_URL             =>  $url,
-            CURLOPT_RETURNTRANSFER  =>  true,
-            CURLOPT_CONNECTTIMEOUT  =>  0,
-            CURLOPT_TIMEOUT         =>  0,
-            CURLOPT_FOLLOWLOCATION  =>  true,
-            CURLOPT_USERAGENT       =>  "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:40.0) Gecko/20100101 Firefox/40.0",
-        ]);
-
-        $result = curl_exec($curl);
-
-        $error = curl_error($curl);
-
-        curl_close($curl);
-
-        if ($result === false) {
-            throw new \Exception($error);
-        }
-
-        return $result;
     }
 }

@@ -18,10 +18,7 @@
 
 
  $('.eqLogicAttr[data-l1key=configuration][data-l2key=model]').on('change',function(){
-    if($(this).value() == null){
-        return;
-    }
-    $('#img_sonosModel').attr('src','plugins/sonos3/core/img/'+$(this).value().replace(':','')+'.jpg');
+    $('#img_sonosModel').attr('src','plugins/sonos3/core/img/'+$(this).value()+'.jpg');
 });
 
 /*
@@ -42,7 +39,7 @@
 
     tr += '<td>';
     if (is_numeric(_cmd.id)) {
-        tr += '<a class="btn btn-default btn-xs cmdAction" data-action="configure"><i class="fa fa-cogs"></i></a> ';
+        tr += '<a class="btn btn-default btn-xs cmdAction expertModeVisible" data-action="configure"><i class="fa fa-cogs"></i></a> ';
         tr += '<a class="btn btn-default btn-xs cmdAction" data-action="test"><i class="fa fa-rss"></i> {{Tester}}</a>';
     }
     tr += '</td>';

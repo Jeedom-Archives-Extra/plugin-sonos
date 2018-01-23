@@ -2,50 +2,44 @@
 
 namespace duncan3dc\Sonos\Tracks;
 
-use duncan3dc\DomParser\XmlElement;
-use duncan3dc\Sonos\Helper;
-use duncan3dc\Sonos\Interfaces\ControllerInterface;
-use duncan3dc\Sonos\Interfaces\TrackInterface;
+use duncan3dc\DomParser\XmlBase;
+use duncan3dc\DomParser\XmlWriter;
+use duncan3dc\Sonos\Controller;
 
 /**
  * Representation of a track.
  */
-class Track implements TrackInterface
+class Track implements UriInterface
 {
     /**
      * @var string $uri The uri of the track.
      */
-    private $uri = "";
+    public $uri = "";
 
     /**
      * @var string $title The name of the track.
      */
-    private $title = "";
+    public $title = "";
 
     /**
      * @var string $artist The name of the artist of the track.
      */
-    private $artist = "";
+    public $artist = "";
 
     /**
      * @var string $album The name of the album of the track.
      */
-    private $album = "";
+    public $album = "";
 
     /**
      * @var int $number The number of the track.
      */
-    private $number = 0;
+    public $number = 0;
 
     /**
      * @var string $albumArt The full path to the album art for this track.
      */
-    private $albumArt = "";
-
-    /**
-     * @var string $itemId The id of the item.
-     */
-    private $itemId = "-1";
+    public $albumArt = "";
 
 
     /**
@@ -53,7 +47,7 @@ class Track implements TrackInterface
      *
      * @param string $uri The URI of the track
      */
-    public function __construct(string $uri)
+    public function __construct($uri)
     {
         $this->uri = (string) $uri;
     }
@@ -64,9 +58,20 @@ class Track implements TrackInterface
      *
      * @return string
      */
-    public function getUri(): string
+    public function getUri()
     {
         return $this->uri;
+    }
+
+
+    /**
+     * Get the ID of this track.
+     *
+     * @return string
+     */
+    protected function getId()
+    {
+        return "-1";
     }
 
 
@@ -75,153 +80,48 @@ class Track implements TrackInterface
      *
      * @return string
      */
-    public function getMetaData(): string
+    public function getMetaData()
     {
-        return Helper::createMetaDataXml($this->itemId, "-1", [
-            "res"               =>  $this->uri,
-            "upnp:albumArtURI"  =>  $this->albumArt,
-            "dc:title"          =>  $this->title,
-            "upnp:class"        =>  "object.item.audioItem.musicTrack",
-            "dc:creator"        =>  $this->artist,
-            "upnp:album"        =>  $this->album,
+        $xml = XmlWriter::createXml([
+            "DIDL-Lite" =>  [
+                "_attributes"   =>  [
+                    "xmlns:dc"      =>  "http://purl.org/dc/elements/1.1/",
+                    "xmlns:upnp"    =>  "urn:schemas-upnp-org:metadata-1-0/upnp/",
+                    "xmlns:r"       =>  "urn:schemas-rinconnetworks-com:metadata-1-0/",
+                    "xmlns"         =>  "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/",
+                ],
+                "item"  =>  [
+                    "_attributes"   =>  [
+                        "id"            =>  $this->getId(),
+                        "parentID"      =>  "-1",
+                        "restricted"    =>  "true",
+                    ],
+                    "res"               =>  $this->uri,
+                    "upnp:albumArtURI"  =>  $this->albumArt,
+                    "dc:title"          =>  $this->title,
+                    "upnp:class"        =>  "object.item.audioItem.musicTrack",
+                    "dc:creator"        =>  $this->artist,
+                    "upnp:album"        =>  $this->album,
+                ],
+            ]
         ]);
-    }
 
+        # Get rid of the xml header as only the DIDL-Lite element is required
+        $meta = explode("\n", $xml)[1];
 
-    /**
-     * Set the name of the track.
-     *
-     * @param string $title The title of the track
-     *
-     * @return $this
-     */
-    public function setTitle(string $title): TrackInterface
-    {
-        $this->title = $title;
-        return $this;
-    }
-
-
-    /**
-     * Get the name of the track.
-     *
-     * @return string
-     */
-    public function getTitle(): string
-    {
-        return $this->title;
-    }
-
-
-    /**
-     * Set the artist of the track.
-     *
-     * @param string $artist The artist of the track
-     *
-     * @return $this
-     */
-    public function setArtist(string $artist): TrackInterface
-    {
-        $this->artist = $artist;
-        return $this;
-    }
-
-
-    /**
-     * Get the name of the artist of the track.
-     *
-     * @return string
-     */
-    public function getArtist(): string
-    {
-        return $this->artist;
-    }
-
-
-    /**
-     * Set the album of the track.
-     *
-     * @param string $album The album of the track
-     *
-     * @return $this
-     */
-    public function setAlbum(string $album): TrackInterface
-    {
-        $this->album = $album;
-        return $this;
-    }
-
-
-    /**
-     * Get the name of the album of the track.
-     *
-     * @return string
-     */
-    public function getAlbum(): string
-    {
-        return $this->album;
-    }
-
-
-    /**
-     * Set the number of the track.
-     *
-     * @param int $number The number of the track
-     *
-     * @return $this
-     */
-    public function setNumber(int $number): TrackInterface
-    {
-        $this->number = $number;
-        return $this;
-    }
-
-
-    /**
-     * Get the track number.
-     *
-     * @return int
-     */
-    public function getNumber(): int
-    {
-        return $this->number;
-    }
-
-
-    /**
-     * Set the album art of the track.
-     *
-     * @param string $albumArt The albumArt of the track
-     *
-     * @return $this
-     */
-    public function setAlbumArt(string $albumArt): TrackInterface
-    {
-        $this->albumArt = $albumArt;
-        return $this;
-    }
-
-
-    /**
-     * @var string $albumArt The full path to the album art for this track.
-     *
-     * @return string
-     */
-    public function getAlbumArt(): string
-    {
-        return $this->albumArt;
+        return $meta;
     }
 
 
     /**
      * Update the track properties using an xml element.
      *
-     * @param XmlElement $xml The xml element representing the track meta data
-     * @param ControllerInterface $controller A controller instance to communicate with
+     * @param XmlBase $xml The xml element representing the track meta data.
+     * @param Controller $controller A controller instance on the playlist's network
      *
-     * @return self
+     * @return static
      */
-    public static function createFromXml(XmlElement $xml, ControllerInterface $controller): TrackInterface
+    public static function createFromXml(XmlBase $xml, Controller $controller)
     {
         $track = new static($xml->getTag("res"));
 
@@ -244,15 +144,7 @@ class Track implements TrackInterface
         $track->number = (int) $number;
 
         if ($art = (string) $xml->getTag("albumArtURI")) {
-            if (substr($art, 0, 4) !== "http") {
-                $art = ltrim($art, "/");
-                $art = sprintf("http://%s:1400/%s", $controller->getIp(), $art);
-            }
-            $track->albumArt = $art;
-        }
-
-        if ($xml->hasAttribute("id")) {
-            $track->itemId = $xml->getAttribute("id");
+            $track->albumArt = sprintf("http://%s:1400%s", $controller->ip, $art);
         }
 
         return $track;

@@ -20,11 +20,9 @@ try {
 	require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 	include_file('core', 'authentification', 'php');
 
-	if (!isConnect()) {
+	if (!isConnect('admin')) {
 		throw new Exception(__('401 - Accès non autorisé', __FILE__));
 	}
-
-	ajax::init();
 
 	if (init('action') == 'syncSonos') {
 		sonos3::syncSonos();
@@ -83,16 +81,6 @@ try {
 		ajax::success();
 	}
 
-	if (init('action') == 'playFavourite') {
-		$sonos = sonos3::byId(init('id'));
-		if (!is_object($sonos)) {
-			ajax::success();
-		}
-		$cmd = $sonos->getCmd(null, 'play_favourite');
-		$cmd->execCmd(array('title' => init('favourite')));
-		ajax::success();
-	}
-
 	if (init('action') == 'addSpeaker') {
 		$sonos = sonos3::byId(init('id'));
 		if (!is_object($sonos)) {
@@ -146,13 +134,9 @@ try {
 		ajax::success($return);
 	}
 
-	if (init('action') == 'updateSonos') {
-		sonos3::updateSonos();
-		ajax::success();
-	}
-
 	throw new Exception(__('Aucune méthode correspondante à : ', __FILE__) . init('action'));
 	/*     * *********Catch exeption*************** */
 } catch (Exception $e) {
 	ajax::error(displayExeption($e), $e->getCode());
 }
+?>

@@ -2,437 +2,558 @@
 
 namespace duncan3dc\Sonos;
 
+use Doctrine\Common\Cache\Cache as CacheInterface;
 use duncan3dc\DomParser\XmlParser;
-use duncan3dc\Sonos\Devices\Discovery;
-use duncan3dc\Sonos\Devices\Factory;
-use duncan3dc\Sonos\Exceptions\NotFoundException;
-use duncan3dc\Sonos\Interfaces\AlarmInterface;
-use duncan3dc\Sonos\Interfaces\ControllerInterface;
-use duncan3dc\Sonos\Interfaces\Devices\CollectionInterface;
-use duncan3dc\Sonos\Interfaces\NetworkInterface;
-use duncan3dc\Sonos\Interfaces\PlaylistInterface;
-use duncan3dc\Sonos\Interfaces\Services\RadioInterface;
-use duncan3dc\Sonos\Interfaces\SpeakerInterface;
 use duncan3dc\Sonos\Services\Radio;
-use GuzzleHttp\Client;
+use duncan3dc\Sonos\Tracks\Stream;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * Provides methods to locate speakers/controllers/playlists on the current network.
  */
-class Network implements NetworkInterface, LoggerAwareInterface {
-	/**
-	 * @var CollectionInterface $collection The collection of devices on the network.
-	 */
-	private $collection;
+class Network implements LoggerAwareInterface
+{
+    /**
+     * @var Speaker[]|null $speakers Speakers that are available on the current network.
+     */
+    protected $speakers;
 
-	/**
-	 * @var Speaker[]|null $speakers Speakers that are available on the current network.
-	 */
-	protected $speakers;
+    /**
+     * @var Playlists[]|null $playlists Playlists that are available on the current network.
+     */
+    protected $playlists;
 
-	/**
-	 * @var PlaylistInterface[]|null $playlists Playlists that are available on the current network.
-	 */
-	protected $playlists;
+    /**
+     * @var Alarm[]|null $alarms Alarms that are available on the current network.
+     */
+    protected $alarms;
 
-	/**
-	 * @var AlarmInterface[]|null $alarms Alarms that are available on the current network.
-	 */
-	protected $alarms;
+    /**
+     * @var CacheInterface $cache The cache object to use for the expensive multicast discover to find Sonos devices on the network.
+     */
+    protected $cache;
 
-	/**
-	 * Create a new instance.
-	 *
-	 * @param CollectionInterface $collection The collection of devices on this network
-	 */
-	public function __construct(CollectionInterface $collection = null) {
-		if ($collection === null) {
-			$collection = new Discovery(new Factory);
-		}
-		$this->collection = $collection;
-	}
+    /**
+     * @var LoggerInterface $logger The logging object.
+     */
+    protected $logger;
 
-	/**
-	 * Set the logger object to use.
-	 *
-	 * @var LoggerInterface $logger The logging object
-	 *
-	 * @return $this
-	 */
-	public function setLogger(LoggerInterface $logger) {
 
-		$this->collection->setLogger($logger);
+    /**
+     * Create a new instance.
+     *
+     * @param CacheInterface $cache The cache object to use for the expensive multicast discover to find Sonos devices on the network
+     * @param LoggerInterface $logger The logging object
+     */
+    public function __construct(CacheInterface $cache = null, LoggerInterface $logger = null)
+    {
+        if ($cache === null) {
+            $cache = new Cache;
+        }
+        $this->cache = $cache;
 
-		return $this;
-	}
+        if ($logger === null) {
+            $logger = new NullLogger;
+        }
+        $this->logger = $logger;
+    }
 
-	/**
-	 * Get the logger object to use.
-	 *
-	 * @return LoggerInterface $logger The logging object
-	 */
-	public function getLogger() {
-		return $this->collection->getLogger();
-	}
 
-	/**
-	 * Get all the speakers on the network.
-	 *
-	 * @return SpeakerInterface[]
-	 */
-	public function getSpeakers(): array
-	{
-		if (is_array($this->speakers)) {
-			return $this->speakers;
-		}
+    /**
+     * Set the logger object to use.
+     *
+     * @var LoggerInterface $logger The logging object
+     *
+     * @return static
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
 
-		$devices = $this->collection->getDevices();
-		if (count($devices) < 1) {
-			throw new \RuntimeException("No devices in this collection");
-		}
+        return $this;
+    }
 
-		$this->getLogger()->info("creating speaker instances");
 
-		# Get the topology information from 1 speaker
-		$topology = [];
-		$ip = reset($devices)->ip;
-		$uri = "http://{$ip}:1400/status/topology";
-		$this->getLogger()->notice("Getting topology info from: {$uri}");
-		$xml = (string) (new Client)->get($uri)->getBody();
-		$players = (new XmlParser($xml))->getTag("ZonePlayers")->getTags("ZonePlayer");
-		foreach ($players as $player) {
-			$attributes = $player->getAttributes();
-			$ip = parse_url($attributes["location"])["host"];
-			$topology[$ip] = $attributes;
-		}
+    /**
+     * Get the logger object to use.
+     *
+     * @return LoggerInterface $logger The logging object
+     */
+    public function getLogger()
+    {
+        return $this->logger;
+    }
 
-		$this->speakers = [];
-		foreach ($devices as $device) {
-			if (!$device->isSpeaker()) {
-				continue;
-			}
 
-			$speaker = new Speaker($device);
+    /**
+     * Get all the devices on the current network.
+     *
+     * @return string[] An array of ip addresses
+     */
+    protected function getDevices()
+    {
+        $this->logger->info("discovering devices...");
 
-			if (!isset($topology[$device->ip])) {
-				throw new \RuntimeException("Failed to lookup the topology info for this speaker");
-			}
+        $ip = "239.255.255.250";
+        $port = 1900;
 
-			$speaker->setTopology($topology[$device->ip]);
+        $sock = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
+        socket_set_option($sock, getprotobyname("ip"), IP_MULTICAST_TTL, 2);
 
-			$this->speakers[$device->ip] = $speaker;
-		}
+        $data = "M-SEARCH * HTTP/1.1\r\n";
+        $data .= "HOST: " . $ip . ":reservedSSDPport\r\n";
+        $data .= "MAN: ssdp:discover\r\n";
+        $data .= "MX: 1\r\n";
+        $data .= "ST: urn:schemas-upnp-org:device:ZonePlayer:1\r\n";
 
-		return $this->speakers;
-	}
+        $this->logger->debug($data);
 
-	/**
-	 * Get a Controller instance from the network.
-	 *
-	 * Useful for managing playlists/alarms, as these need a controller but it doesn't matter which one.
-	 *
-	 * @return ControllerInterface
-	 */
-	public function getController(): ControllerInterface{
-		$controllers = $this->getControllers();
-		if ($controller = reset($controllers)) {
-			return $controller;
-		}
+        socket_sendto($sock, $data, strlen($data), null, $ip, $port);
 
-		throw new NotFoundException("Unable to find any controllers on the current network");
-	}
+        $read = [$sock];
+        $write = [];
+        $except = [];
+        $name = null;
+        $port = null;
+        $tmp = "";
 
-	/**
-	 * Get a speaker with the specified room name.
-	 *
-	 * @param string $room The name of the room to look for
-	 *
-	 * @return SpeakerInterface
-	 */
-	public function getSpeakerByRoom(string $room): SpeakerInterface{
-		$speakers = $this->getSpeakers();
-		foreach ($speakers as $speaker) {
-			if ($speaker->getRoom() === $room) {
-				return $speaker;
-			}
-		}
+        $response = "";
+        while (socket_select($read, $write, $except, 1)) {
+            socket_recvfrom($sock, $tmp, 2048, null, $name, $port);
+            $response .= $tmp;
+        }
 
-		throw new NotFoundException("Unable to find any speakers on the current network");
-	}
+        $this->logger->debug($response);
 
-	/**
-	 * Get all the speakers with the specified room name.
-	 *
-	 * @param string $room The name of the room to look for
-	 *
-	 * @return SpeakerInterface[]
-	 */
-	public function getSpeakersByRoom(string $room): array
-	{
-		$return = [];
+        $devices = [];
+        foreach (explode("\r\n\r\n", $response) as $reply) {
+            if (!$reply) {
+                continue;
+            }
 
-		$speakers = $this->getSpeakers();
-		foreach ($speakers as $controller) {
-			if ($controller->getRoom() === $room) {
-				$return[] = $controller;
-			}
-		}
+            $data = [];
+            foreach (explode("\r\n", $reply) as $line) {
+                if (!$pos = strpos($line, ":")) {
+                    continue;
+                }
+                $key = strtolower(substr($line, 0, $pos));
+                $val = trim(substr($line, $pos + 1));
+                $data[$key] = $val;
+            }
+            $devices[] = $data;
+        }
 
-		return $return;
-	}
+        $return = [];
+        $unique = [];
+        foreach ($devices as $device) {
+            if ($device["st"] !== "urn:schemas-upnp-org:device:ZonePlayer:1") {
+                continue;
+            }
+            if (in_array($device["usn"], $unique)) {
+                continue;
+            }
+            $this->logger->info("found device: {usn}", $device);
 
-	/**
-	 * Get all the coordinators on the network.
-	 *
-	 * @return ControllerInterface[]
-	 */
-	public function getControllers(): array
-	{
-		$controllers = [];
+            $url = parse_url($device["location"]);
+            $ip = $url["host"];
 
-		$speakers = $this->getSpeakers();
-		foreach ($speakers as $speaker) {
-			if (!$speaker->isCoordinator()) {
-				continue;
-			}
-			$ip = $speaker->getIp();
-			$controllers[$ip] = new Controller($speaker, $this);
-		}
+            $return[] = $ip;
+            $unique[] = $device["usn"];
+        }
 
-		return $controllers;
-	}
+        return $return;
+    }
 
-	/**
-	 * Get the coordinator for the specified room name.
-	 *
-	 * @param string $room The name of the room to look for
-	 *
-	 * @return ControllerInterface
-	 */
-	public function getControllerByRoom(string $room): ControllerInterface{
-		$group = $this->getSpeakerByRoom($room)->getGroup();
 
-		$controllers = $this->getControllers();
-		foreach ($controllers as $controller) {
-			if ($controller->getGroup() === $group) {
-				return $controller;
-			}
-		}
+    /**
+     * Get all the speakers on the network.
+     *
+     * @return Speaker[]
+     */
+    public function getSpeakers()
+    {
+        if (is_array($this->speakers)) {
+            return $this->speakers;
+        }
 
-		throw new NotFoundException("Unable to find the controller for the room '{$room}'");
-	}
+        $this->logger->info("creating speaker instances");
 
-	/**
-	 * Get the coordinator for the specified ip address.
-	 *
-	 * @param string $ip The ip address of the speaker
-	 *
-	 * @return ControllerInterface
-	 */
-	public function getControllerByIp(string $ip): ControllerInterface{
-		$speakers = $this->getSpeakers();
-		if (!array_key_exists($ip, $speakers)) {
-			throw new NotFoundException("Unable to find the speaker for the IP address '{$ip}'");
-		}
+        if ($this->cache->contains("devices")) {
+            $this->logger->info("getting device info from cache");
+            $devices = $this->cache->fetch("devices");
+        } else {
+            $devices = $this->getDevices();
 
-		$group = $speakers[$ip]->getGroup();
+            # Only cache the devices if we actually found some
+            if (count($devices) > 0) {
+                $this->cache->save("devices", $devices);
+            }
+        }
 
-		foreach ($this->getControllers() as $controller) {
-			if ($controller->getGroup() === $group) {
-				return $controller;
-			}
-		}
-	}
+        if (count($devices) < 1) {
+            throw new \Exception("No devices found on the current network");
+        }
 
-	/**
-	 * Get all the playlists available on the network.
-	 *
-	 * @return PlaylistInterface[]
-	 */
-	public function getPlaylists(): array
-	{
-		if (is_array($this->playlists)) {
-			return $this->playlists;
-		}
+        $speakers = [];
+        foreach ($devices as $ip) {
+            $device = new Device($ip, $this->cache, $this->logger);
+            if ($device->isSpeaker()) {
+                $speakers[$ip] = new Speaker($device);
+            }
+        }
 
-		$controller = $this->getController();
-		if ($controller === null) {
-			throw new \RuntimeException("No controller found on the current network");
-		}
+        return $this->speakers = $speakers;
+    }
 
-		$data = $controller->soap("ContentDirectory", "Browse", [
-			"ObjectID" => "SQ:",
-			"BrowseFlag" => "BrowseDirectChildren",
-			"Filter" => "",
-			"StartingIndex" => 0,
-			"RequestedCount" => 100,
-			"SortCriteria" => "",
-		]);
-		$parser = new XmlParser($data["Result"]);
 
-		$playlists = [];
-		foreach ($parser->getTags("container") as $container) {
-			$playlists[] = new Playlist($container, $controller);
-		}
+    /**
+     * Reset any previously gathered speaker information.
+     *
+     * @return static
+     */
+    public function clearTopology()
+    {
+        $this->speakers = null;
 
-		return $this->playlists = $playlists;
-	}
+        return $this;
+    }
 
-	/**
-	 * Check if a playlist with the specified name exists on this network.
-	 *
-	 * If no case-sensitive match is found it will return a case-insensitive match.
-	 *
-	 * @param string The name of the playlist
-	 *
-	 * @return bool
-	 */
-	public function hasPlaylist(string $name): bool{
-		$playlists = $this->getPlaylists();
-		foreach ($playlists as $playlist) {
-			if ($playlist->getName() === $name) {
-				return true;
-			}
-			if (strtolower($playlist->getName()) === strtolower($name)) {
-				return true;
-			}
-		}
 
-		return false;
-	}
+    /**
+     * Get a Controller instance from the network.
+     *
+     * Useful for managing playlists/alarms, as these need a controller but it doesn't matter which one.
+     *
+     * @return Controller|null
+     */
+    public function getController()
+    {
+        $controllers = $this->getControllers();
+        if ($controller = reset($controllers)) {
+            return $controller;
+        }
+    }
 
-	/**
-	 * Get the playlist with the specified name.
-	 *
-	 * If no case-sensitive match is found it will return a case-insensitive match.
-	 *
-	 * @param string The name of the playlist
-	 *
-	 * @return PlaylistInterface
-	 */
-	public function getPlaylistByName(string $name): PlaylistInterface{
-		$roughMatch = false;
 
-		$playlists = $this->getPlaylists();
-		foreach ($playlists as $playlist) {
-			if ($playlist->getName() === $name) {
-				return $playlist;
-			}
-			if (strtolower($playlist->getName()) === strtolower($name)) {
-				$roughMatch = $playlist;
-			}
-		}
+    /**
+     * Get a speaker with the specified room name.
+     *
+     * @param string $room The name of the room to look for
+     *
+     * @return Speaker|null
+     */
+    public function getSpeakerByRoom($room)
+    {
+        $speakers = $this->getSpeakers();
+        foreach ($speakers as $speaker) {
+            if ($speaker->room === $room) {
+                return $speaker;
+            }
+        }
+    }
 
-		if ($roughMatch) {
-			return $roughMatch;
-		}
 
-		throw new NotFoundException("No playlist called '{$name}' exists on this network");
-	}
+    /**
+     * Get all the speakers with the specified room name.
+     *
+     * @param string $room The name of the room to look for
+     *
+     * @return Speaker[]
+     */
+    public function getSpeakersByRoom($room)
+    {
+        $return = [];
 
-	/**
-	 * Get the playlist with the specified id.
-	 *
-	 * @param string The ID of the playlist (eg SQ:123)
-	 *
-	 * @return PlaylistInterface
-	 */
-	public function getPlaylistById(string $id): PlaylistInterface{
-		$controller = $this->getController();
-		if ($controller === null) {
-			throw new \RuntimeException("No controller found on the current network");
-		}
+        $speakers = $this->getSpeakers();
+        foreach ($speakers as $controller) {
+            if ($controller->room === $room) {
+                $return[] = $controller;
+            }
+        }
 
-		return new Playlist($id, $controller);
-	}
+        return $return;
+    }
 
-	/**
-	 * Create a new playlist.
-	 *
-	 * @param string The name to give to the playlist
-	 *
-	 * @return PlaylistInterface
-	 */
-	public function createPlaylist(string $name): PlaylistInterface{
-		$controller = $this->getController();
-		if ($controller === null) {
-			throw new \RuntimeException("No controller found on the current network");
-		}
 
-		$data = $controller->soap("AVTransport", "CreateSavedQueue", [
-			"Title" => $name,
-			"EnqueuedURI" => "",
-			"EnqueuedURIMetaData" => "",
-		]);
+    /**
+     * Get all the coordinators on the network.
+     *
+     * @return Controller[]
+     */
+    public function getControllers()
+    {
+        $controllers = [];
 
-		$playlist = new Playlist($data["AssignedObjectID"], $controller);
+        $speakers = $this->getSpeakers();
+        foreach ($speakers as $speaker) {
+            if (!$speaker->isCoordinator()) {
+                continue;
+            }
+            $controllers[$speaker->ip] = new Controller($speaker, $this);
+        }
 
-		$this->playlists[] = $playlist;
+        return $controllers;
+    }
 
-		return $playlist;
-	}
 
-	/**
-	 * Get all the alarms available on the network.
-	 *
-	 * @return AlarmInterface[]
-	 */
-	public function getAlarms(): array
-	{
-		if (is_array($this->alarms)) {
-			return $this->alarms;
-		}
+    /**
+     * Get the coordinator for the specified room name.
+     *
+     * @param string $room The name of the room to look for
+     *
+     * @return Controller|null
+     */
+    public function getControllerByRoom($room)
+    {
+        if (!$speaker = $this->getSpeakerByRoom($room)) {
+            return;
+        }
 
-		$data = $this->getController()->soap("AlarmClock", "ListAlarms");
-		$parser = new XmlParser($data["CurrentAlarmList"]);
+        $group = $speaker->getGroup();
 
-		$alarms = [];
-		foreach ($parser->getTags("Alarm") as $tag) {
-			$alarms[] = new Alarm($tag, $this);
-		}
+        $controllers = $this->getControllers();
+        foreach ($controllers as $controller) {
+            if ($controller->getGroup() === $group) {
+                return $controller;
+            }
+        }
+    }
 
-		return $this->alarms = $alarms;
-	}
 
-	/**
-	 * Get the alarm from the specified id.
-	 *
-	 * @param int $id The ID of the alarm
-	 *
-	 * @return AlarmInterface
-	 */
-	public function getAlarmById(int $id): AlarmInterface{
-		$id = (int) $id;
+    /**
+     * Get the coordinator for the specified ip address.
+     *
+     * @param string $ip The ip address of the speaker
+     *
+     * @return Controller|null
+     */
+    public function getControllerByIp($ip)
+    {
+        $speakers = $this->getSpeakers();
+        if (!array_key_exists($ip, $speakers)) {
+            throw new \InvalidArgumentException("No speaker found for the IP address '" . $ip . "'");
+        }
 
-		$alarms = $this->getAlarms();
-		foreach ($alarms as $alarm) {
-			if ($alarm->getId() === $id) {
-				return $alarm;
-			}
-		}
+        $group = $speakers[$ip]->getGroup();
 
-		throw new NotFoundException("Unable to find an alarm with the id {$id} on this network");
-	}
+        foreach ($this->getControllers() as $controller) {
+            if ($controller->getGroup() === $group) {
+                return $controller;
+            }
+        }
+    }
 
-	/**
-	 * Get the Sonos favourites.
-	 *
-	 * @return Favourites
-	 */
-	public function getFavourites() {
-		$controller = $this->getController();
-		return new Favourites($controller);
-	}
 
-	/**
-	 * Get a Radio instance for the network.
-	 *
-	 * @return RadioInterface
-	 */
-	public function getRadio(): RadioInterface{
-		$controller = $this->getController();
-		return new Radio($controller);
-	}
+    /**
+     * Get all the playlists available on the network.
+     *
+     * @return Playlist[]
+     */
+    public function getPlaylists()
+    {
+        if (is_array($this->playlists)) {
+            return $this->playlists;
+        }
+
+        $controller = $this->getController();
+        if ($controller === null) {
+            throw new \RuntimeException("No controller found on the current network");
+        }
+
+        $data = $controller->soap("ContentDirectory", "Browse", [
+            "ObjectID"          =>  "SQ:",
+            "BrowseFlag"        =>  "BrowseDirectChildren",
+            "Filter"            =>  "",
+            "StartingIndex"     =>  0,
+            "RequestedCount"    =>  100,
+            "SortCriteria"      =>  "",
+        ]);
+        $parser = new XmlParser($data["Result"]);
+
+        $playlists = [];
+        foreach ($parser->getTags("container") as $container) {
+            $playlists[] = new Playlist($container, $controller);
+        }
+
+        return $this->playlists = $playlists;
+    }
+
+
+    /**
+     * Check if a playlist with the specified name exists on this network.
+     *
+     * If no case-sensitive match is found it will return a case-insensitive match.
+     *
+     * @param string The name of the playlist
+     *
+     * @return bool
+     */
+    public function hasPlaylist($name)
+    {
+        $playlists = $this->getPlaylists();
+        foreach ($playlists as $playlist) {
+            if ($playlist->getName() === $name) {
+                return true;
+            }
+            if (strtolower($playlist->getName()) === strtolower($name)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Get the playlist with the specified name.
+     *
+     * If no case-sensitive match is found it will return a case-insensitive match.
+     *
+     * @param string The name of the playlist
+     *
+     * @return Playlist|null
+     */
+    public function getPlaylistByName($name)
+    {
+        $roughMatch = false;
+
+        $playlists = $this->getPlaylists();
+        foreach ($playlists as $playlist) {
+            if ($playlist->getName() === $name) {
+                return $playlist;
+            }
+            if (strtolower($playlist->getName()) === strtolower($name)) {
+                $roughMatch = $playlist;
+            }
+        }
+
+        if ($roughMatch) {
+            return $roughMatch;
+        }
+    }
+
+
+    /**
+     * Get the playlist with the specified id.
+     *
+     * @param int The ID of the playlist
+     *
+     * @return Playlist
+     */
+    public function getPlaylistById($id)
+    {
+        $controller = $this->getController();
+        if ($controller === null) {
+            throw new \RuntimeException("No controller found on the current network");
+        }
+
+        return new Playlist($id, $controller);
+    }
+
+
+    /**
+     * Create a new playlist.
+     *
+     * @param string The name to give to the playlist
+     *
+     * @return Playlist
+     */
+    public function createPlaylist($name)
+    {
+        $controller = $this->getController();
+        if ($controller === null) {
+            throw new \RuntimeException("No controller found on the current network");
+        }
+
+        $data = $controller->soap("AVTransport", "CreateSavedQueue", [
+            "Title"                 =>  $name,
+            "EnqueuedURI"           =>  "",
+            "EnqueuedURIMetaData"   =>  "",
+        ]);
+
+        $playlist = new Playlist($data["AssignedObjectID"], $controller);
+
+        $this->playlists[] = $playlist;
+
+        return $playlist;
+    }
+
+
+    /**
+     * Get all the alarms available on the network.
+     *
+     * @return Alarm[]
+     */
+    public function getAlarms()
+    {
+        if (is_array($this->alarms)) {
+            return $this->alarms;
+        }
+
+        $data = $this->getController()->soap("AlarmClock", "ListAlarms");
+        $parser = new XmlParser($data["CurrentAlarmList"]);
+
+        $alarms = [];
+        foreach ($parser->getTags("Alarm") as $tag) {
+            $alarms[] = new Alarm($tag, $this);
+        }
+
+        return $this->alarms = $alarms;
+    }
+
+
+    /**
+     * Get alarms for the specified id.
+     *
+     * @return Alarm
+     */
+    public function getAlarmById($id)
+    {
+        $id = (int) $id;
+
+        $alarms = $this->getAlarms();
+        foreach ($alarms as $alarm) {
+            if ($alarm->getId() === $id) {
+                return $alarm;
+            }
+        }
+    }
+
+
+    /**
+     * Get a Radio instance for the network.
+     *
+     * @return Radio
+     */
+    public function getRadio()
+    {
+        $controller = $this->getController();
+        return new Radio($controller);
+    }
+
+
+    /**
+     * Get the favourite radio stations.
+     *
+     * @return Stream[]
+     */
+    public function getRadioStations()
+    {
+        trigger_error("The getRadioStations() method is deprecated in favour of getRadio()->getFavouriteStations()", \E_USER_DEPRECATED);
+        return $this->getRadio()->getFavouriteStations();
+    }
+
+
+    /**
+     * Get the favourite radio shows.
+     *
+     * @return Stream[]
+     */
+    public function getRadioShows()
+    {
+        trigger_error("The getRadioShows() method is deprecated in favour of getRadio()->getFavouriteShows()", \E_USER_DEPRECATED);
+        return $this->getRadio()->getFavouriteShows();
+    }
 }

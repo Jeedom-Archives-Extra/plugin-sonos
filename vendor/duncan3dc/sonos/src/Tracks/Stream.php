@@ -2,29 +2,67 @@
 
 namespace duncan3dc\Sonos\Tracks;
 
-use duncan3dc\DomParser\XmlElement;
-use duncan3dc\Sonos\Helper;
-use duncan3dc\Sonos\Interfaces\ControllerInterface;
-use duncan3dc\Sonos\Interfaces\TrackInterface;
+use duncan3dc\DomParser\XmlWriter;
 
 /**
  * Representation of a stream.
  */
-class Stream extends Track
+class Stream implements UriInterface
 {
-    const PREFIX = "x-sonosapi-stream";
+    /**
+     * @var string $uri The uri of the stream.
+     */
+    protected $uri = "";
+
+    /**
+     * @var string $name The name of the stream.
+     */
+    protected $name = "";
+
 
     /**
      * Create a Stream object.
      *
      * @param string $uri The URI of the stream
-     * @param string $title The title of the stream
      */
-    public function __construct(string $uri, string $title = "")
+    public function __construct($uri, $name = "")
     {
-        parent::__construct($uri);
+        $this->uri = (string) $uri;
+        $this->name = (string) $name;
+    }
 
-        $this->setTitle($title);
+
+    /**
+     * Get the URI for this stream.
+     *
+     * @return string
+     */
+    public function getUri()
+    {
+        return $this->uri;
+    }
+
+
+    /**
+     * Get the name for this stream.
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+
+    /**
+     * Get the name for this stream.
+     *
+     * @return string
+     */
+    public function getTitle()
+    {
+        trigger_error("The getTitle() method is deprecated in favour of getName()", \E_USER_DEPRECATED);
+        return $this->getName();
     }
 
 
@@ -33,32 +71,38 @@ class Stream extends Track
      *
      * @return string
      */
-    public function getMetaData(): string
+    public function getMetaData()
     {
-        return Helper::createMetaDataXml("-1", "-1", [
-            "dc:title"          =>  $this->getTitle() ?: "Stream",
-            "upnp:class"        =>  "object.item.audioItem.audioBroadcast",
-            "desc"              =>  [
-                "_attributes"       =>  [
-                    "id"        =>  "cdudn",
-                    "nameSpace" =>  "urn:schemas-rinconnetworks-com:metadata-1-0/",
+        $xml = XmlWriter::createXml([
+            "DIDL-Lite" =>  [
+                "_attributes"   =>  [
+                    "xmlns:dc"      =>  "http://purl.org/dc/elements/1.1/",
+                    "xmlns:upnp"    =>  "urn:schemas-upnp-org:metadata-1-0/upnp/",
+                    "xmlns:r"       =>  "urn:schemas-rinconnetworks-com:metadata-1-0/",
+                    "xmlns"         =>  "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/",
                 ],
-                "_value"            =>  "SA_RINCON65031_",
-            ],
+                "item"  =>  [
+                    "_attributes"   =>  [
+                        "id"            =>  "-1",
+                        "parentID"      =>  "-1",
+                        "restricted"    =>  "true",
+                    ],
+                    "dc:title"          =>  $this->getName() ?: "Stream",
+                    "upnp:class"        =>  "object.item.audioItem.audioBroadcast",
+                    "desc"              =>  [
+                        "_attributes"       =>  [
+                            "id"        =>  "cdudn",
+                            "nameSpace" =>  "urn:schemas-rinconnetworks-com:metadata-1-0/",
+                        ],
+                        "_value"            =>  "SA_RINCON65031_",
+                    ],
+                ],
+            ]
         ]);
-    }
 
+        # Get rid of the xml header as only the DIDL-Lite element is required
+        $meta = explode("\n", $xml)[1];
 
-    /**
-     * Create a stream from an xml element.
-     *
-     * @param XmlElement $xml The xml element representing the track meta data
-     * @param ControllerInterface $controller A controller instance to communicate with
-     *
-     * @return self
-     */
-    public static function createFromXml(XmlElement $xml, ControllerInterface $controller): TrackInterface
-    {
-        return new static($xml->getTag("res")->nodeValue, $xml->getTag("title")->nodeValue);
+        return $meta;
     }
 }

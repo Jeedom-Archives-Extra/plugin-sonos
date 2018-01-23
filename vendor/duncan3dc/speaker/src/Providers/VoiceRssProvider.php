@@ -5,7 +5,7 @@ namespace duncan3dc\Speaker\Providers;
 use duncan3dc\Speaker\Exception;
 
 /**
- * Convert a string of a text to spoken word audio.
+ * Convert a string of a text to a spoken word mp3.
  */
 class VoiceRssProvider extends AbstractProvider
 {
@@ -100,11 +100,11 @@ class VoiceRssProvider extends AbstractProvider
 
 
     /**
-     * Convert the specified text to audio.
+     * Convert the specified text to mp3 audio.
      *
      * @param string $text The text to convert
      *
-     * @return string The audio data
+     * @return string The mp3 audio data
      */
     public function textToSpeech($text)
     {

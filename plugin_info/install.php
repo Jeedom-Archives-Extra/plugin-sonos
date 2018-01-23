@@ -40,6 +40,7 @@ function sonos3_install() {
 
 function sonos3_update() {
 	$cron = cron::byClassAndFunction('sonos3', 'pull');
+
 	if (!is_object($cron)) {
 		$cron = new cron();
 	}
@@ -62,11 +63,6 @@ function sonos3_update() {
 		if (file_exists($path)) {
 			unlink($path);
 		}
-	}
-	try {
-		sonos3::syncSonos();
-	} catch (Exception $e) {
-
 	}
 }
 
