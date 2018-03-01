@@ -1,11 +1,6 @@
 Changelog
 =========
 
-Changelog détaillé :
-<https://github.com/jeedom/plugin-sonos/commits/stable>
-
-- 	Ajout de la gestion des favoris sonos
-
 -   Ajout Sonos One et Playbase
 
 -   Correction de la langue avec picotts
